@@ -1,0 +1,12 @@
+﻿[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "MAS-004_VJ6530-ZBC-Bridge"
+version = "0.1.0"
+description = "Videojet 6530 bridge using ZBC binary protocol"
+requires-python = ">=3.9"
+
+[tool.setuptools]
+packages = ["mas004_vj6530_zbc_bridge"]
