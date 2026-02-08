@@ -1,0 +1,8 @@
+﻿{
+  "enabled": true,
+  "simulation": true,
+  "host": "192.168.2.30",
+  "port": 3007,
+  "timeout_s": 2.0,
+  "poll_interval_s": 2.0
+}

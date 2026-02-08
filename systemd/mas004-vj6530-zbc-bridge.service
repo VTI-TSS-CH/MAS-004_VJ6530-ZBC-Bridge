@@ -1,0 +1,17 @@
+﻿[Unit]
+Description=MAS-004 Videojet 6530 ZBC Bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/MAS-004_VJ6530-ZBC-Bridge
+ExecStart=/opt/MAS-004_VJ6530-ZBC-Bridge/.venv/bin/python -m mas004_vj6530_zbc_bridge --config /etc/mas004_vj6530_zbc_bridge/config.json
+Restart=always
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
