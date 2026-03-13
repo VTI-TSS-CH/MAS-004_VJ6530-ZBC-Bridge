@@ -23,13 +23,9 @@ def _ensure_repo_on_path():
                 sys.path.insert(0, sibling_repo_str)
 
 
-try:
-    from mas004_zbc_library import ClarityParameterArchive, MessageId, ZbcClient, dataclass_to_dict, parse_zbc_mapping  # type: ignore[attr-defined]
-    from mas004_zbc_library.framing import build_message, parse_message
-except ImportError:
-    _ensure_repo_on_path()
-    from mas004_zbc_library import ClarityParameterArchive, MessageId, ZbcClient, dataclass_to_dict, parse_zbc_mapping  # type: ignore[attr-defined]
-    from mas004_zbc_library.framing import build_message, parse_message
+_ensure_repo_on_path()
+from mas004_zbc_library import ClarityParameterArchive, MessageId, ZbcClient, dataclass_to_dict, parse_zbc_mapping  # type: ignore[attr-defined]
+from mas004_zbc_library.framing import build_message, parse_message
 
 
 __all__ = [
