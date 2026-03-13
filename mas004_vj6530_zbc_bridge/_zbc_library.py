@@ -24,13 +24,29 @@ def _ensure_repo_on_path():
 
 
 _ensure_repo_on_path()
-from mas004_zbc_library import ClarityParameterArchive, MessageId, ZbcClient, dataclass_to_dict, parse_zbc_mapping  # type: ignore[attr-defined]
+from mas004_zbc_library import (  # type: ignore[attr-defined]
+    AsyncSubscriptionId,
+    ClarityParameterArchive,
+    CommandMapping,
+    CurrentParameterMapping,
+    ErrorStateMapping,
+    MessageId,
+    StatusMapping,
+    ZbcClient,
+    dataclass_to_dict,
+    parse_zbc_mapping,
+)
 from mas004_zbc_library.framing import build_message, parse_message
 
 
 __all__ = [
     "ClarityParameterArchive",
+    "AsyncSubscriptionId",
+    "CommandMapping",
+    "CurrentParameterMapping",
+    "ErrorStateMapping",
     "MessageId",
+    "StatusMapping",
     "ZbcClient",
     "build_message",
     "dataclass_to_dict",
