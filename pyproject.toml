@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "MAS-004_VJ6530-ZBC-Bridge"
 version = "0.2.0"
 description = "Videojet 6530 bridge using ZBC binary protocol and service"
+# Runtime minimum. For training and local development, the team standard is Python 3.13.x.
 requires-python = ">=3.9"
 
 [project.scripts]

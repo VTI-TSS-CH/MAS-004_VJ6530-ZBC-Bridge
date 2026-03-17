@@ -2,6 +2,12 @@
 
 Bridge-Client und Daemon fuer Videojet 6530 (TTO) ueber ZBC Binary Protocol.
 
+## Python fuer Schulung und Entwicklung
+- Teamstandard fuer neue Entwicklungsrechner: `Python 3.13.x`
+- `Python 3.12.x` ist als Fallback okay, wenn `3.13` auf dem Zielsystem nicht sauber verfuegbar ist
+- `Python 3.14` derzeit nicht als Schulungsstandard verwenden
+- `requires-python = ">=3.9"` im `pyproject.toml` beschreibt nur die technische Mindestversion, nicht die empfohlene Teamversion
+
 ## Enthalten
 - `client.py`: Bridge-Wrapper auf `MAS-004_ZBC-Library`
 - `_zbc_library.py`: Import/Fallback auf das benachbarte Repo `MAS-004_ZBC-Library`
@@ -17,7 +23,8 @@ Bridge-Client und Daemon fuer Videojet 6530 (TTO) ueber ZBC Binary Protocol.
 ## Installation auf Raspi
 ```bash
 cd /opt/MAS-004_VJ6530-ZBC-Bridge
-python3 -m venv .venv
+python3.13 -m venv .venv
+# alternativ auf Systemen ohne 3.13: python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
 pip install -e .
