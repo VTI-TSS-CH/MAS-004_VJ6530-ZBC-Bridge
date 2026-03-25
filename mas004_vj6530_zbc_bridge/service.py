@@ -9,8 +9,31 @@ from mas004_vj6530_zbc_bridge.client import ZbcBridgeClient
 from mas004_vj6530_zbc_bridge.config import Settings, DEFAULT_CFG_PATH
 
 
+PROBE_SUMMARY_CACHE_MIN_S = 10.0
+PROBE_SUMMARY_CACHE_MULTIPLIER = 5.0
+PROBE_TRANSIENT_GRACE_MIN_S = 20.0
+PROBE_TRANSIENT_GRACE_MULTIPLIER = 6.0
+
+
 def _probe_client_key(cfg: Settings) -> tuple[str, int, float]:
     return ((cfg.host or "").strip(), int(cfg.port or 0), float(cfg.timeout_s or 0.0))
+
+
+def _probe_summary_cache_ttl_s(cfg: Settings) -> float:
+    return max(PROBE_SUMMARY_CACHE_MIN_S, float(getattr(cfg, "poll_interval_s", 2.0) or 2.0) * PROBE_SUMMARY_CACHE_MULTIPLIER)
+
+
+def _is_transient_probe_failure(
+    last_success_monotonic: float,
+    consecutive_failures: int,
+    poll_interval_s: float,
+    now_monotonic: float | None = None,
+) -> bool:
+    if consecutive_failures != 1 or last_success_monotonic <= 0.0:
+        return False
+    now_monotonic = time.monotonic() if now_monotonic is None else float(now_monotonic)
+    grace_s = max(PROBE_TRANSIENT_GRACE_MIN_S, float(poll_interval_s or 2.0) * PROBE_TRANSIENT_GRACE_MULTIPLIER)
+    return (now_monotonic - last_success_monotonic) <= grace_s
 
 
 def probe(
@@ -21,7 +44,12 @@ def probe(
     if not cfg.host or int(cfg.port or 0) <= 0:
         return False, "host/port not configured", None
 
-    client = client or client_factory(cfg.host, int(cfg.port), timeout_s=float(cfg.timeout_s))
+    client = client or client_factory(
+        cfg.host,
+        int(cfg.port),
+        timeout_s=float(cfg.timeout_s),
+        summary_cache_ttl_s=_probe_summary_cache_ttl_s(cfg),
+    )
     try:
         snapshot = client.probe()
         msg = (
@@ -83,6 +111,9 @@ def main() -> int:
     last_cfg_reload = 0.0
     probe_client = None
     probe_client_key = None
+    consecutive_failures = 0
+    last_success_monotonic = 0.0
+    last_transient_msg = ""
 
     while True:
         now = time.time()
@@ -94,6 +125,9 @@ def main() -> int:
         if current_probe_key != probe_client_key:
             probe_client = None
             probe_client_key = current_probe_key
+            consecutive_failures = 0
+            last_success_monotonic = 0.0
+            last_transient_msg = ""
 
         if not cfg.enabled:
             if last_state is not False or last_msg != "disabled":
@@ -101,6 +135,9 @@ def main() -> int:
             last_state = False
             last_msg = "disabled"
             probe_client = None
+            consecutive_failures = 0
+            last_success_monotonic = 0.0
+            last_transient_msg = ""
             time.sleep(max(0.2, float(cfg.poll_interval_s or 2.0)))
             continue
 
@@ -110,17 +147,40 @@ def main() -> int:
             last_state = True
             last_msg = "simulation"
             probe_client = None
+            consecutive_failures = 0
+            last_success_monotonic = 0.0
+            last_transient_msg = ""
             time.sleep(max(0.2, float(cfg.poll_interval_s or 2.0)))
             continue
 
         ok, msg, probe_client = probe(cfg, client=probe_client)
-        if ok != last_state or msg != last_msg:
+        if ok:
+            consecutive_failures = 0
+            last_success_monotonic = time.monotonic()
+            last_transient_msg = ""
             if ok:
-                logging.info(msg)
+                if ok != last_state or msg != last_msg:
+                    logging.info(msg)
+            last_state = ok
+            last_msg = msg
+        else:
+            consecutive_failures += 1
+            transient = _is_transient_probe_failure(
+                last_success_monotonic,
+                consecutive_failures,
+                float(cfg.poll_interval_s or 2.0),
+            )
+            if transient:
+                transient_msg = f"zbc probe transient after recent success: {msg}"
+                if transient_msg != last_transient_msg:
+                    logging.info(transient_msg)
+                    last_transient_msg = transient_msg
             else:
-                logging.warning(msg)
-        last_state = ok
-        last_msg = msg
+                if ok != last_state or msg != last_msg:
+                    logging.warning(msg)
+                last_state = ok
+                last_msg = msg
+                last_transient_msg = ""
 
         time.sleep(max(0.2, float(cfg.poll_interval_s or 2.0)))
 

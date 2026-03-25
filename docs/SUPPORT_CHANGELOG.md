@@ -1,5 +1,10 @@
 # SUPPORT_CHANGELOG - MAS-004_VJ6530-ZBC-Bridge
 
+## 2026-03-25 (Standalone Probe Calm-Down)
+- `ZbcBridgeClient.probe()` now uses the bridge-level summary cache instead of forcing a fresh live summary request every time.
+- The standalone `mas004-vj6530-zbc-bridge.service` now creates its probe client with a longer summary-cache window.
+- A single timeout immediately after a recent successful probe is now treated as transient and logged without flipping the daemon into warning/down-state noise.
+
 ## 2026-03-25 (Probe Client Reuse)
 - Service probe loop now reuses one `ZbcBridgeClient` as long as `host`, `port` and `timeout_s` stay unchanged.
 - `ZbcBridgeClient.probe()` now reuses an already-known transport profile instead of forcing a fresh profile-detect on every probe call.

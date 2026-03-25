@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from mas004_vj6530_zbc_bridge.service import probe
+from mas004_vj6530_zbc_bridge.service import _is_transient_probe_failure, _probe_summary_cache_ttl_s, probe
 
 
 class FakeClient:
@@ -42,9 +42,9 @@ class ServiceProbeTests(unittest.TestCase):
     def test_probe_creates_client_when_missing(self):
         created = []
 
-        def factory(host, port, timeout_s):
+        def factory(host, port, timeout_s, summary_cache_ttl_s):
             client = FakeClient()
-            created.append((host, port, timeout_s, client))
+            created.append((host, port, timeout_s, summary_cache_ttl_s, client))
             return client
 
         ok, msg, client = probe(_cfg(), client=None, client_factory=factory)
@@ -55,7 +55,8 @@ class ServiceProbeTests(unittest.TestCase):
         self.assertEqual("192.168.2.103", created[0][0])
         self.assertEqual(3002, created[0][1])
         self.assertEqual(8.0, created[0][2])
-        self.assertIs(client, created[0][3])
+        self.assertEqual(10.0, created[0][3])
+        self.assertIs(client, created[0][4])
 
     def test_probe_keeps_client_on_failure(self):
         client = FakeClient(error=TimeoutError("timed out"))
@@ -75,6 +76,22 @@ class ServiceProbeTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual("host/port not configured", msg)
         self.assertIsNone(reused)
+
+    def test_probe_summary_cache_ttl_has_minimum(self):
+        self.assertEqual(10.0, _probe_summary_cache_ttl_s(_cfg()))
+
+    def test_probe_summary_cache_ttl_scales_with_interval(self):
+        cfg = SimpleNamespace(host="192.168.2.103", port=3002, timeout_s=8.0, poll_interval_s=5.0)
+        self.assertEqual(25.0, _probe_summary_cache_ttl_s(cfg))
+
+    def test_single_recent_failure_is_transient(self):
+        self.assertTrue(_is_transient_probe_failure(100.0, 1, 2.0, now_monotonic=110.0))
+
+    def test_second_failure_is_not_transient(self):
+        self.assertFalse(_is_transient_probe_failure(100.0, 2, 2.0, now_monotonic=101.0))
+
+    def test_old_failure_is_not_transient(self):
+        self.assertFalse(_is_transient_probe_failure(100.0, 1, 2.0, now_monotonic=130.0))
 
 
 if __name__ == "__main__":

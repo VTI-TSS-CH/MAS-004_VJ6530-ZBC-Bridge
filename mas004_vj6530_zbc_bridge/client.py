@@ -37,6 +37,30 @@ class ProbeResult:
     active_warnings: tuple[str, ...]
 
 
+def _probe_result_from_summary_payload(summary_payload: dict[str, Any]) -> ProbeResult:
+    profile_name = str(summary_payload.get("profile") or "")
+    data = dict(summary_payload.get("summary") or {})
+    tags = {tag["name"]: tag["value"] for tag in data.get("tags", []) if isinstance(tag, dict)}
+    machine = tags.get("mch") or {}
+    job = tags.get("jin") or {}
+    lei = tags.get("lei") or {}
+    supplies = tags.get("sup") or {}
+    ribbon_level = None
+    for consumable in supplies.get("consumables", []):
+        if consumable.get("type") == "Ribbon":
+            ribbon_level = consumable.get("level")
+            break
+    return ProbeResult(
+        profile_name=profile_name,
+        machine_name=str(machine.get("name") or ""),
+        machine_model=str(machine.get("model") or ""),
+        job_name=str(job.get("name") or ""),
+        ribbon_level=ribbon_level,
+        active_faults=tuple(entry.get("name", "") for entry in lei.get("faults", [])),
+        active_warnings=tuple(entry.get("name", "") for entry in lei.get("warnings", [])),
+    )
+
+
 class ZbcBridgeClient:
     """Bridge-facing wrapper around the shared MAS-004 ZBC library."""
 
@@ -81,32 +105,8 @@ class ZbcBridgeClient:
             raise RuntimeError("host/port not configured")
         return self._with_client(lambda client: parse_message(client._ensure_transport().exchange_message(build_message(message_id, body))), retries=1)
 
-    def probe(self) -> ProbeResult:
-        def _collect(client: ZbcClient):
-            profile = client.profile or client.detect_profile()
-            summary = client.request_summary_info()
-            return profile, dataclass_to_dict(summary)
-
-        profile, data = self._with_client(_collect)
-        tags = {tag["name"]: tag["value"] for tag in data.get("tags", [])}
-        machine = tags.get("mch") or {}
-        job = tags.get("jin") or {}
-        lei = tags.get("lei") or {}
-        supplies = tags.get("sup") or {}
-        ribbon_level = None
-        for consumable in supplies.get("consumables", []):
-            if consumable.get("type") == "Ribbon":
-                ribbon_level = consumable.get("level")
-                break
-        return ProbeResult(
-            profile_name=profile.name,
-            machine_name=str(machine.get("name") or ""),
-            machine_model=str(machine.get("model") or ""),
-            job_name=str(job.get("name") or ""),
-            ribbon_level=ribbon_level,
-            active_faults=tuple(entry.get("name", "") for entry in lei.get("faults", [])),
-            active_warnings=tuple(entry.get("name", "") for entry in lei.get("warnings", [])),
-        )
+    def probe(self, force_refresh: bool = False) -> ProbeResult:
+        return _probe_result_from_summary_payload(self.summary_dict(force_refresh=force_refresh))
 
     def request_current_parameters(self) -> ClarityParameterArchive:
         with self._lock:

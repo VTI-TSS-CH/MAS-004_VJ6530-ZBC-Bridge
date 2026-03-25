@@ -43,6 +43,7 @@ chmod +x scripts/*.sh
 ZBC-Standardport fuer den 6530 ist hier `3002`.
 
 Der Daemon behaelt seinen Probe-Client ueber die Poll-Zyklen hinweg und lernt das funktionierende Transportprofil nur neu an, wenn sich `host`, `port` oder `timeout_s` aendern.
+Fuer den Standalone-Probe-Daemon wird die Summary zusaetzlich mit einem laengeren Cache-Fenster abgefedert; ein einzelner Timeout nach frischem Erfolg gilt nur als transient und erzeugt keinen sofortigen Down-Flap.
 
 ## Manuelle Live-Pruefung
 ```bash

@@ -23,6 +23,7 @@
 - Config values (`host`, `port`, `timeout_s`, `simulation`) are valid.
 - Probe output stable (`zbc ok`/expected failures only).
 - After a successful first probe, repeated probe cycles should not re-learn the transport profile unless config values changed or the service restarted.
+- A single short timeout after recent success should appear as transient and should not immediately cause a warning/down-state flap.
 - Manual live checks:
   - `python -m mas004_vj6530_zbc_bridge --config /etc/mas004_vj6530_zbc_bridge/config.json --summary-json`
   - `python -m mas004_vj6530_zbc_bridge --config /etc/mas004_vj6530_zbc_bridge/config.json --read-current-parameter System/TCPIP/BinaryCommsNetworkPort2`

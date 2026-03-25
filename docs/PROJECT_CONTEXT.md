@@ -37,6 +37,8 @@
 ## Probe Runtime Notes
 - The service probe loop keeps one `ZbcBridgeClient` per `(host, port, timeout_s)` tuple.
 - Cached transport-profile knowledge survives between probe cycles and is only relearned after config changes or service restarts.
+- The standalone service also uses a longer summary cache than the interactive client path.
+- A single timeout after a recent successful probe is treated as transient to avoid warning/down-state flapping.
 
 ## Integration Boundary
 - Repository focus is 6530-facing operations built on top of the shared library.
