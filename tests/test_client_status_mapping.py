@@ -10,7 +10,7 @@ class FakeLibraryClient:
 
     def write_mapped_value(self, mapping: str, value):
         self.calls.append((mapping, str(value)))
-        return MessageId.NUL, None
+        return MessageId.NUL, "3"
 
 
 class ClientStatusMappingTests(unittest.TestCase):

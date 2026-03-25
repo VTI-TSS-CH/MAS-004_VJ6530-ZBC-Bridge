@@ -4,6 +4,10 @@
 - `ZbcBridgeClient` now exposes numeric `STATUS[PRINTER_STATE_CODE]` reads.
 - `write_mapped_value()` now accepts `STATUS[PRINTER_STATE_CODE]` and forwards the directly commandable states `0`, `3`, `6` to the shared library control path.
 - The bridge status snapshot now tracks the numeric code so upper layers can acknowledge `TTS0001` writes consistently.
+- Refined live transition handling:
+  - `3` from `6` is now realized as `STARTUP` then `START`
+  - `0` from `6` is realized as `STARTUP`
+  - derived targets `1`, `2`, `4`, `5` stay rejected instead of pretending to be commandable
 
 ## 2026-03-25 (Standalone Probe Calm-Down)
 - `ZbcBridgeClient.probe()` now uses the bridge-level summary cache instead of forcing a fresh live summary request every time.

@@ -28,6 +28,11 @@
 - `write_current_parameters()` via `FTX[CURRENT_PARAMETERS]`
 - `read_mapped_value("STATUS[PRINTER_STATE_CODE]")`
 - `write_mapped_value("STATUS[PRINTER_STATE_CODE]", "<code>")` for the directly commandable target states `0`, `3`, `6`
+- Live sequencing nuance on the TEST 6530:
+  - `SHUTDOWN (6) -> OFFLINE (0)` via `STARTUP`
+  - `OFFLINE (0) -> ONLINE (3)` via `START`
+  - `SHUTDOWN (6) -> ONLINE (3)` therefore runs as `STARTUP` then `START`
+- Derived state codes `1`, `2`, `4`, `5` are not direct control targets.
 - Controlled live writeback proven on:
   - `System/TCPIP/JobUpdateReplyDelay`
   - value flow: `0 -> 1 -> 0`

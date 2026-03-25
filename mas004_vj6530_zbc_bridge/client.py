@@ -220,29 +220,30 @@ class ZbcBridgeClient:
             return self.write_current_parameter(spec.path, value, verify_readback=verify_readback)
         if isinstance(spec, (CommandMapping, StatusMapping)):
             normalized = _normalize_status_write_value(spec, value)
-            message_id, _response = self._with_client(lambda client: client.write_mapped_value(mapping, value))
+            message_id, verified = self._with_client(lambda client: client.write_mapped_value(mapping, value))
+            effective_value = str(verified).strip().upper() if verified is not None else normalized
             if message_id == MessageId.NUL:
                 with self._lock:
                     self._status_snapshot["last_command"] = _status_write_command_label(spec, normalized)
                     if isinstance(spec, StatusMapping) and spec.name == "PRINTER_STATE_CODE":
-                        self._status_snapshot["printer_state_code"] = normalized
-                        self._status_snapshot["printer_state_text"] = PRINTER_STATE_TEXT_BY_CODE.get(normalized, self._status_snapshot.get("printer_state_text"))
-                        self._status_snapshot["printer_powered_down"] = normalized == "6"
-                        if normalized == "3":
+                        self._status_snapshot["printer_state_code"] = effective_value
+                        self._status_snapshot["printer_state_text"] = PRINTER_STATE_TEXT_BY_CODE.get(effective_value, self._status_snapshot.get("printer_state_text"))
+                        self._status_snapshot["printer_powered_down"] = effective_value == "6"
+                        if effective_value == "3":
                             self._status_snapshot["printer_online"] = True
                             self._status_snapshot["printer_fault"] = False
                             self._status_snapshot["printer_warning"] = False
-                        elif normalized == "0":
+                        elif effective_value == "0":
                             self._status_snapshot["printer_online"] = False
                             self._status_snapshot["printer_powered_down"] = False
-                        elif normalized == "6":
+                        elif effective_value == "6":
                             self._status_snapshot["printer_online"] = False
                     if self._status_snapshot["last_command"] in ("ONLINE", "START"):
                         self._status_snapshot["printer_online"] = True
                     elif self._status_snapshot["last_command"] in ("OFFLINE", "STOP", "SHUTDOWN"):
                         self._status_snapshot["printer_online"] = False
             self.invalidate_summary_cache()
-            return message_id, normalized if verify_readback else None
+            return message_id, effective_value if verify_readback else None
         raise ValueError(f"mapping is not writable: {mapping!r}")
 
     def summary_dict(self, force_refresh: bool = False) -> dict[str, Any]:
