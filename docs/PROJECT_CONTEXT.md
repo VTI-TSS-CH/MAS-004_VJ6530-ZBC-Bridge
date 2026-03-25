@@ -19,12 +19,15 @@
   - summary probing
   - current-parameter read/write
   - batched workbook-mapping resolution for the Raspi poller
+  - numeric printer-state mapping via `STATUS[PRINTER_STATE_CODE]`
   - legacy compatibility methods for raw mapped transactions
 
 ## Live Verified Capability
 - `request_summary_info()` via shared library
 - `request_current_parameters()` via `FRQ[CURRENT_PARAMETERS]`
 - `write_current_parameters()` via `FTX[CURRENT_PARAMETERS]`
+- `read_mapped_value("STATUS[PRINTER_STATE_CODE]")`
+- `write_mapped_value("STATUS[PRINTER_STATE_CODE]", "<code>")` for the directly commandable target states `0`, `3`, `6`
 - Controlled live writeback proven on:
   - `System/TCPIP/JobUpdateReplyDelay`
   - value flow: `0 -> 1 -> 0`
@@ -43,6 +46,7 @@
 ## Integration Boundary
 - Repository focus is 6530-facing operations built on top of the shared library.
 - Business parameter semantics stay in `MAS-004_RPI-Databridge`.
+- ZBC async/status coverage is intentionally limited to status/event data; arbitrary printer-side `CURRENT_PARAMETERS` edits still require polling/readback in the main project.
 
 ## Last Reviewed
 - Date: 2026-03-25

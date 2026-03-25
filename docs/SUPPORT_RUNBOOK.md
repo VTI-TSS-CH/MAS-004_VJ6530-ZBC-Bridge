@@ -28,6 +28,9 @@
   - `python -m mas004_vj6530_zbc_bridge --config /etc/mas004_vj6530_zbc_bridge/config.json --summary-json`
   - `python -m mas004_vj6530_zbc_bridge --config /etc/mas004_vj6530_zbc_bridge/config.json --read-current-parameter System/TCPIP/BinaryCommsNetworkPort2`
   - `python -m mas004_vj6530_zbc_bridge --config /etc/mas004_vj6530_zbc_bridge/config.json --write-current-parameter System/TCPIP/JobUpdateReplyDelay 1`
+  - `python - <<'PY'` / bridge client smoke check for `read_mapped_value("STATUS[PRINTER_STATE_CODE]")`
+  - `python - <<'PY'` / bridge client smoke check for `write_mapped_value("STATUS[PRINTER_STATE_CODE]", "3")`
+- Remember: generic printer-side `CURRENT_PARAMETERS` edits from the CLARiTY UI still do not surface as async ZBC events; the main Databridge must detect them via polling/readback.
 
 ## 5. Controlled Writeback Proof
 - Live verified on 2026-03-13:

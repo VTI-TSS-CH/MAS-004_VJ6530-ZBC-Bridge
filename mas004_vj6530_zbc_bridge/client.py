@@ -37,6 +37,18 @@ class ProbeResult:
     active_warnings: tuple[str, ...]
 
 
+PRINTER_STATE_CODE_BY_TEXT = {
+    "OFFLINE": "0",
+    "OFFLINE_WARNING": "1",
+    "OFFLINE_FAULT": "2",
+    "ONLINE": "3",
+    "ONLINE_WARNING": "4",
+    "ONLINE_FAULT": "5",
+    "SHUTDOWN": "6",
+}
+PRINTER_STATE_TEXT_BY_CODE = {value: key for key, value in PRINTER_STATE_CODE_BY_TEXT.items()}
+
+
 def _probe_result_from_summary_payload(summary_payload: dict[str, Any]) -> ProbeResult:
     profile_name = str(summary_payload.get("profile") or "")
     data = dict(summary_payload.get("summary") or {})
@@ -206,17 +218,31 @@ class ZbcBridgeClient:
             raise ValueError(f"unsupported ZBC mapping: {mapping!r}")
         if isinstance(spec, CurrentParameterMapping):
             return self.write_current_parameter(spec.path, value, verify_readback=verify_readback)
-        if isinstance(spec, CommandMapping):
+        if isinstance(spec, (CommandMapping, StatusMapping)):
+            normalized = _normalize_status_write_value(spec, value)
             message_id, _response = self._with_client(lambda client: client.write_mapped_value(mapping, value))
             if message_id == MessageId.NUL:
                 with self._lock:
-                    self._status_snapshot["last_command"] = str(value).strip().upper()
+                    self._status_snapshot["last_command"] = _status_write_command_label(spec, normalized)
+                    if isinstance(spec, StatusMapping) and spec.name == "PRINTER_STATE_CODE":
+                        self._status_snapshot["printer_state_code"] = normalized
+                        self._status_snapshot["printer_state_text"] = PRINTER_STATE_TEXT_BY_CODE.get(normalized, self._status_snapshot.get("printer_state_text"))
+                        self._status_snapshot["printer_powered_down"] = normalized == "6"
+                        if normalized == "3":
+                            self._status_snapshot["printer_online"] = True
+                            self._status_snapshot["printer_fault"] = False
+                            self._status_snapshot["printer_warning"] = False
+                        elif normalized == "0":
+                            self._status_snapshot["printer_online"] = False
+                            self._status_snapshot["printer_powered_down"] = False
+                        elif normalized == "6":
+                            self._status_snapshot["printer_online"] = False
                     if self._status_snapshot["last_command"] in ("ONLINE", "START"):
                         self._status_snapshot["printer_online"] = True
                     elif self._status_snapshot["last_command"] in ("OFFLINE", "STOP", "SHUTDOWN"):
                         self._status_snapshot["printer_online"] = False
             self.invalidate_summary_cache()
-            return message_id, str(value).strip().upper() if verify_readback else None
+            return message_id, normalized if verify_readback else None
         raise ValueError(f"mapping is not writable: {mapping!r}")
 
     def summary_dict(self, force_refresh: bool = False) -> dict[str, Any]:
@@ -344,6 +370,7 @@ def _status_value_as_text(status_values: dict[str, Any], name: str) -> str | Non
             "PRINTER_ACTIVE_ERROR_TYPE": "printer_active_error_type",
             "PRINTER_ACTIVE_ERROR_STRING": "printer_active_error_string",
             "PRINTER_STATE_TEXT": "printer_state_text",
+            "PRINTER_STATE_CODE": "printer_state_code",
         }.get((name or "").strip().upper(), ""),
     )
     if value is None:
@@ -351,6 +378,40 @@ def _status_value_as_text(status_values: dict[str, Any], name: str) -> str | Non
     if isinstance(value, bool):
         return "1" if value else "0"
     return str(value)
+
+
+def _normalize_status_write_value(spec: CommandMapping | StatusMapping, value: str | int | float | bool) -> str:
+    if isinstance(spec, CommandMapping):
+        return str(value).strip().upper()
+    if spec.name != "PRINTER_STATE_CODE":
+        return str(value).strip().upper()
+
+    text = str(value).strip().upper()
+    if text in PRINTER_STATE_TEXT_BY_CODE:
+        return text
+    aliases = {
+        "STOP": "0",
+        "OFFLINE": "0",
+        "ONLINE": "3",
+        "START": "3",
+        "STARTUP": "3",
+        "SHUTDOWN": "6",
+    }
+    if text in aliases:
+        return aliases[text]
+    raise ValueError(f"unsupported printer state code value: {value!r}")
+
+
+def _status_write_command_label(spec: CommandMapping | StatusMapping, normalized_value: str) -> str:
+    if isinstance(spec, CommandMapping):
+        return normalized_value
+    if spec.name != "PRINTER_STATE_CODE":
+        return normalized_value
+    return {
+        "0": "OFFLINE",
+        "3": "ONLINE",
+        "6": "SHUTDOWN",
+    }.get(normalized_value, normalized_value)
 
 
 def _has_matching_error_dict(summary_dict: dict[str, Any], mapping: ErrorStateMapping) -> bool:

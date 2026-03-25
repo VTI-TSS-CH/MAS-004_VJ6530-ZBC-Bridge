@@ -1,5 +1,10 @@
 # SUPPORT_CHANGELOG - MAS-004_VJ6530-ZBC-Bridge
 
+## 2026-03-25 (`PRINTER_STATE_CODE` Bridge Support)
+- `ZbcBridgeClient` now exposes numeric `STATUS[PRINTER_STATE_CODE]` reads.
+- `write_mapped_value()` now accepts `STATUS[PRINTER_STATE_CODE]` and forwards the directly commandable states `0`, `3`, `6` to the shared library control path.
+- The bridge status snapshot now tracks the numeric code so upper layers can acknowledge `TTS0001` writes consistently.
+
 ## 2026-03-25 (Standalone Probe Calm-Down)
 - `ZbcBridgeClient.probe()` now uses the bridge-level summary cache instead of forcing a fresh live summary request every time.
 - The standalone `mas004-vj6530-zbc-bridge.service` now creates its probe client with a longer summary-cache window.
