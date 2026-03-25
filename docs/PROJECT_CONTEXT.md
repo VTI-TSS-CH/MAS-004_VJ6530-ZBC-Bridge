@@ -34,10 +34,14 @@
 - Systemd unit: `mas004-vj6530-zbc-bridge.service`
 - Pi repo path: `/opt/MAS-004_VJ6530-ZBC-Bridge`
 
+## Probe Runtime Notes
+- The service probe loop keeps one `ZbcBridgeClient` per `(host, port, timeout_s)` tuple.
+- Cached transport-profile knowledge survives between probe cycles and is only relearned after config changes or service restarts.
+
 ## Integration Boundary
 - Repository focus is 6530-facing operations built on top of the shared library.
 - Business parameter semantics stay in `MAS-004_RPI-Databridge`.
 
 ## Last Reviewed
-- Date: 2026-03-13
+- Date: 2026-03-25
 - Bridge now consumes `MAS-004_ZBC-Library` from sibling repo or installed package

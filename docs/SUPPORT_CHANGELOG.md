@@ -1,5 +1,10 @@
 # SUPPORT_CHANGELOG - MAS-004_VJ6530-ZBC-Bridge
 
+## 2026-03-25 (Probe Client Reuse)
+- Service probe loop now reuses one `ZbcBridgeClient` as long as `host`, `port` and `timeout_s` stay unchanged.
+- `ZbcBridgeClient.probe()` now reuses an already-known transport profile instead of forcing a fresh profile-detect on every probe call.
+- Goal: reduce repeated 6530 profile handshakes and avoid avoidable probe load on the shared `3002` ZBC endpoint.
+
 ## 2026-03-13 (Longer Parameter Cache + Faster Failure Path)
 - Bridge client now keeps separate cache windows:
   - `CURRENT_PARAMETERS` cache defaults to 30s

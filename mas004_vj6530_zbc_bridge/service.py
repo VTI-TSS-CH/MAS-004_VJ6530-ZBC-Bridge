@@ -9,12 +9,21 @@ from mas004_vj6530_zbc_bridge.client import ZbcBridgeClient
 from mas004_vj6530_zbc_bridge.config import Settings, DEFAULT_CFG_PATH
 
 
-def probe(cfg: Settings) -> tuple[bool, str]:
-    if not cfg.host or int(cfg.port or 0) <= 0:
-        return False, "host/port not configured"
+def _probe_client_key(cfg: Settings) -> tuple[str, int, float]:
+    return ((cfg.host or "").strip(), int(cfg.port or 0), float(cfg.timeout_s or 0.0))
 
+
+def probe(
+    cfg: Settings,
+    client: ZbcBridgeClient | None = None,
+    client_factory=ZbcBridgeClient,
+) -> tuple[bool, str, ZbcBridgeClient | None]:
+    if not cfg.host or int(cfg.port or 0) <= 0:
+        return False, "host/port not configured", None
+
+    client = client or client_factory(cfg.host, int(cfg.port), timeout_s=float(cfg.timeout_s))
     try:
-        snapshot = ZbcBridgeClient(cfg.host, int(cfg.port), timeout_s=float(cfg.timeout_s)).probe()
+        snapshot = client.probe()
         msg = (
             f"zbc ok: {cfg.host}:{cfg.port} "
             f"profile={snapshot.profile_name} "
@@ -24,9 +33,9 @@ def probe(cfg: Settings) -> tuple[bool, str]:
             f"warnings={len(snapshot.active_warnings)} "
             f"ribbon={snapshot.ribbon_level or '-'}"
         )
-        return True, msg
+        return True, msg, client
     except Exception as exc:
-        return False, f"zbc probe failed: {repr(exc)}"
+        return False, f"zbc probe failed: {repr(exc)}", client
 
 
 def main() -> int:
@@ -72,6 +81,8 @@ def main() -> int:
     last_state = None
     last_msg = ""
     last_cfg_reload = 0.0
+    probe_client = None
+    probe_client_key = None
 
     while True:
         now = time.time()
@@ -79,11 +90,17 @@ def main() -> int:
             cfg = Settings.load(cfg_path)
             last_cfg_reload = now
 
+        current_probe_key = _probe_client_key(cfg)
+        if current_probe_key != probe_client_key:
+            probe_client = None
+            probe_client_key = current_probe_key
+
         if not cfg.enabled:
             if last_state is not False or last_msg != "disabled":
                 logging.info("service disabled in config")
             last_state = False
             last_msg = "disabled"
+            probe_client = None
             time.sleep(max(0.2, float(cfg.poll_interval_s or 2.0)))
             continue
 
@@ -92,10 +109,11 @@ def main() -> int:
                 logging.info("simulation mode enabled")
             last_state = True
             last_msg = "simulation"
+            probe_client = None
             time.sleep(max(0.2, float(cfg.poll_interval_s or 2.0)))
             continue
 
-        ok, msg = probe(cfg)
+        ok, msg, probe_client = probe(cfg, client=probe_client)
         if ok != last_state or msg != last_msg:
             if ok:
                 logging.info(msg)

@@ -83,7 +83,7 @@ class ZbcBridgeClient:
 
     def probe(self) -> ProbeResult:
         def _collect(client: ZbcClient):
-            profile = client.detect_profile()
+            profile = client.profile or client.detect_profile()
             summary = client.request_summary_info()
             return profile, dataclass_to_dict(summary)
 

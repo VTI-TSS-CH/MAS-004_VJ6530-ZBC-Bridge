@@ -42,6 +42,8 @@ chmod +x scripts/*.sh
 
 ZBC-Standardport fuer den 6530 ist hier `3002`.
 
+Der Daemon behaelt seinen Probe-Client ueber die Poll-Zyklen hinweg und lernt das funktionierende Transportprofil nur neu an, wenn sich `host`, `port` oder `timeout_s` aendern.
+
 ## Manuelle Live-Pruefung
 ```bash
 cd /opt/MAS-004_VJ6530-ZBC-Bridge
