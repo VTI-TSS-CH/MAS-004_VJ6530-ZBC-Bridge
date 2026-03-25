@@ -48,6 +48,8 @@
 - Cached transport-profile knowledge survives between probe cycles and is only relearned after config changes or service restarts.
 - The standalone service also uses a longer summary cache than the interactive client path.
 - A single timeout after a recent successful probe is treated as transient to avoid warning/down-state flapping.
+- The standalone daemon is a diagnostic/probe helper, not the operational owner of live 6530 traffic when the main Databridge already runs async/poll on the same Raspberry.
+- On TEST, the standalone service is intentionally parked so the Databridge remains the sole owner of live `3002` sessions.
 
 ## Integration Boundary
 - Repository focus is 6530-facing operations built on top of the shared library.

@@ -19,7 +19,7 @@
   - `ssh mas004-rpi "sudo journalctl -u mas004-vj6530-zbc-bridge.service -n 120 --no-pager"`
 
 ## 4. Verification
-- Service active.
+- Service active only when this standalone daemon is intentionally used for diagnostics; when the main Databridge owns live 6530 traffic on the same Raspberry, keep this service disabled.
 - Config values (`host`, `port`, `timeout_s`, `simulation`) are valid.
 - Probe output stable (`zbc ok`/expected failures only).
 - After a successful first probe, repeated probe cycles should not re-learn the transport profile unless config values changed or the service restarted.
@@ -37,6 +37,7 @@
 - Expect direct rejection for the derived targets `1`, `2`, `4`, `5`.
 - Remember: generic printer-side `CURRENT_PARAMETERS` edits from the CLARiTY UI still do not surface as async ZBC events; the main Databridge must detect them via polling/readback.
 - If the main Databridge async listener opens repeated long-lived sessions, verify that it consumes the exported `VJ6530_TCP_NO_CRC_PROFILE` from the bridge/library shim instead of forcing fresh profile probes on every session.
+- Do not leave this standalone probe daemon enabled in parallel with the Databridge on the same Raspberry unless a deliberate diagnostic session requires it.
 
 ## 5. Controlled Writeback Proof
 - Live verified on 2026-03-13:
