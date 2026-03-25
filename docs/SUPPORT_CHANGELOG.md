@@ -1,5 +1,8 @@
 # SUPPORT_CHANGELOG - MAS-004_VJ6530-ZBC-Bridge
 
+## 2026-03-25 (Async Profile Export Shim)
+- `_zbc_library.py` now also re-exports `VJ6530_TCP_NO_CRC_PROFILE` so the Databridge async layer can reuse the verified long-lived 6530 transport profile without duplicating bridge-internal import logic.
+
 ## 2026-03-25 (`PRINTER_STATE_CODE` Bridge Support)
 - `ZbcBridgeClient` now exposes numeric `STATUS[PRINTER_STATE_CODE]` reads.
 - `write_mapped_value()` now accepts `STATUS[PRINTER_STATE_CODE]` and forwards the directly commandable states `0`, `3`, `6` to the shared library control path.

@@ -36,6 +36,7 @@
   - `6 -> 3` through `STARTUP` then `START`
 - Expect direct rejection for the derived targets `1`, `2`, `4`, `5`.
 - Remember: generic printer-side `CURRENT_PARAMETERS` edits from the CLARiTY UI still do not surface as async ZBC events; the main Databridge must detect them via polling/readback.
+- If the main Databridge async listener opens repeated long-lived sessions, verify that it consumes the exported `VJ6530_TCP_NO_CRC_PROFILE` from the bridge/library shim instead of forcing fresh profile probes on every session.
 
 ## 5. Controlled Writeback Proof
 - Live verified on 2026-03-13:

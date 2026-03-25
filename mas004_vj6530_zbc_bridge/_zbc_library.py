@@ -39,7 +39,7 @@ from mas004_zbc_library import (  # type: ignore[attr-defined]
     resolve_summary_mappings,
     summary_to_status_values,
 )
-from mas004_zbc_library.framing import build_message, parse_message
+from mas004_zbc_library.framing import VJ6530_TCP_NO_CRC_PROFILE, build_message, parse_message
 
 
 __all__ = [
@@ -50,6 +50,7 @@ __all__ = [
     "ErrorStateMapping",
     "MessageId",
     "StatusMapping",
+    "VJ6530_TCP_NO_CRC_PROFILE",
     "ZbcClient",
     "build_message",
     "dataclass_to_dict",
