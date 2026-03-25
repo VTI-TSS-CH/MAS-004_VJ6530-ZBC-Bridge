@@ -1,5 +1,9 @@
 # SUPPORT_CHANGELOG - MAS-004_VJ6530-ZBC-Bridge
 
+## 2026-03-25 (Bridge Sessions Negotiate `HCV`)
+- `ZbcBridgeClient` now tries `HCV` once per opened client session before running bridge operations.
+- Goal: align bridge-side ad-hoc sessions with the live 6530 expectation that each fresh TCP session should negotiate host capabilities up front.
+
 ## 2026-03-25 (Async Profile Export Shim)
 - `_zbc_library.py` now also re-exports `VJ6530_TCP_NO_CRC_PROFILE` so the Databridge async layer can reuse the verified long-lived 6530 transport profile without duplicating bridge-internal import logic.
 

@@ -282,6 +282,10 @@ class ZbcBridgeClient:
         for attempt in range(1, attempts + 1):
             try:
                 with self._open_client() as client:
+                    try:
+                        client.negotiate_host_version()
+                    except Exception:
+                        pass
                     result = fn(client)
                     self._profile = client.profile
                     return result
