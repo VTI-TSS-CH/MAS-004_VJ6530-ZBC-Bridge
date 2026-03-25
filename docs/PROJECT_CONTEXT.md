@@ -9,6 +9,7 @@
 - Package: `mas004_vj6530_zbc_bridge/`
 - Shared library import shim: `_zbc_library.py`
 - The shim also re-exports the preferred live 6530 transport profile constant so upper layers can open long-lived async sessions with the known-good profile first.
+- The shim now also re-exports `snapshot_to_status_values()` so the Raspi async owner can normalize immediate AIR-driven state rows without reaching past the shared-library boundary.
 - Bridge wrapper around `MAS-004_ZBC-Library`: `client.py`
 - Each ad-hoc bridge client session now attempts `HCV` before executing the requested live operation.
 - Legacy mapping/value codec support: `mapper.py`

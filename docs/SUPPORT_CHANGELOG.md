@@ -1,5 +1,8 @@
 # SUPPORT_CHANGELOG - MAS-004_VJ6530-ZBC-Bridge
 
+## 2026-03-25 (Snapshot Status Shim Export)
+- `_zbc_library.py` now also re-exports `snapshot_to_status_values()` so upper layers can derive immediate printer-state rows directly from AIR snapshots while staying on the shared-library API surface.
+
 ## 2026-03-25 (Bridge Sessions Negotiate `HCV`)
 - `ZbcBridgeClient` now tries `HCV` once per opened client session before running bridge operations.
 - Goal: align bridge-side ad-hoc sessions with the live 6530 expectation that each fresh TCP session should negotiate host capabilities up front.

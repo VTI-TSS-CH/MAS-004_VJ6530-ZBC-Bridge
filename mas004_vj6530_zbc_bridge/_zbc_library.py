@@ -37,6 +37,7 @@ from mas004_zbc_library import (  # type: ignore[attr-defined]
     parse_zbc_mapping,
     resolve_summary_mapping,
     resolve_summary_mappings,
+    snapshot_to_status_values,
     summary_to_status_values,
 )
 from mas004_zbc_library.framing import VJ6530_TCP_NO_CRC_PROFILE, build_message, parse_message
@@ -58,5 +59,6 @@ __all__ = [
     "parse_message",
     "resolve_summary_mapping",
     "resolve_summary_mappings",
+    "snapshot_to_status_values",
     "summary_to_status_values",
 ]

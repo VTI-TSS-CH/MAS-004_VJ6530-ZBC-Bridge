@@ -37,6 +37,7 @@
 - Expect direct rejection for the derived targets `1`, `2`, `4`, `5`.
 - Remember: generic printer-side `CURRENT_PARAMETERS` edits from the CLARiTY UI still do not surface as async ZBC events; the main Databridge must detect them via polling/readback.
 - If the main Databridge async listener opens repeated long-lived sessions, verify that it consumes the exported `VJ6530_TCP_NO_CRC_PROFILE` from the bridge/library shim instead of forcing fresh profile probes on every session.
+- For immediate AIR-driven state fanout in upper layers, prefer the shim-exported `snapshot_to_status_values()` over duplicating printer-state normalization logic again in the caller.
 - If you need to open an interactive bridge/client session while the Databridge owns live async traffic, stop the Databridge first; the TEST 6530 timed out second parallel control sessions while the async owner session was already active.
 - Do not leave this standalone probe daemon enabled in parallel with the Databridge on the same Raspberry unless a deliberate diagnostic session requires it.
 
