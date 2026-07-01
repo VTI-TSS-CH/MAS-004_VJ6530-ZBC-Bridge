@@ -100,6 +100,11 @@ class ZbcBridgeClient:
         self._summary_cached_at = 0.0
         self._status_snapshot: dict[str, Any] = {}
         self._lock = threading.Lock()
+        self._client_lock = threading.RLock()
+        self._client: ZbcClient | None = None
+        self._client_negotiated = False
+        self._client_connect_count = 0
+        self._client_error = ""
 
     def write(self, mapping: ZbcMapping, value: str) -> tuple[int, bytes]:
         body = struct.pack("<H", mapping.command_id & 0xFFFF) + encode_value(value, mapping.codec, mapping.scale, mapping.offset)
@@ -281,20 +286,56 @@ class ZbcBridgeClient:
         last_error = None
         for attempt in range(1, attempts + 1):
             try:
-                with self._open_client() as client:
-                    try:
-                        client.negotiate_host_version()
-                    except Exception:
-                        pass
+                with self._client_lock:
+                    client = self._ensure_client()
+                    if not self._client_negotiated:
+                        try:
+                            client.negotiate_host_version()
+                        except Exception:
+                            pass
+                        self._client_negotiated = True
                     result = fn(client)
                     self._profile = client.profile
+                    self._client_error = ""
                     return result
             except Exception as exc:
                 last_error = exc
+                self._client_error = repr(exc)
+                self.close()
                 if attempt >= attempts:
                     raise
                 time.sleep(self.retry_delay_s)
         raise last_error  # pragma: no cover
+
+    def _ensure_client(self) -> ZbcClient:
+        if self._client is None:
+            client = self._open_client()
+            client.connect()
+            self._client = client
+            self._client_connect_count += 1
+        return self._client
+
+    def close(self) -> None:
+        with self._client_lock:
+            client = self._client
+            self._client = None
+            self._client_negotiated = False
+            if client is not None:
+                try:
+                    client.close()
+                except Exception:
+                    pass
+
+    def diagnostics(self) -> dict[str, Any]:
+        with self._client_lock:
+            return {
+                "host": self.host,
+                "port": self.port,
+                "connected": self._client is not None,
+                "connect_count": self._client_connect_count,
+                "profile": getattr(self._profile, "name", None),
+                "last_error": self._client_error,
+            }
 
     def update_status_snapshot(self, **values):
         with self._lock:
